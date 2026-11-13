@@ -1,0 +1,23 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+
+# LaTeX build artefacts
+report/**/*.aux
+report/**/*.log
+report/**/*.out
+report/**/*.toc
+report/**/*.bbl
+report/**/*.blg
+report/**/*.synctex.gz
+
+# Large raw simulation dumps (summaries in results/ are versioned)
+results/raw/
