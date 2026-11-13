@@ -1,0 +1,12 @@
+[project]
+name = "flsec-rpl-fuzzy-ids"
+version = "0.1.0"
+description = "Reproduction of FLSec-RPL and membership-function optimization (Fuzzy Logic course project)"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+# scikit-fuzzy (used only as a reference in one test) triggers NumPy deprecation warnings.
+filterwarnings = ["ignore::DeprecationWarning:skfuzzy.*"]
