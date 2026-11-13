@@ -19,7 +19,7 @@ from . import config as C
 from .detectors import make_detector_factory
 from .metrics import summarize
 
-EV_TRICKLE_FIRE, EV_TRICKLE_END, EV_RX, EV_REPLAY, EV_DATA, EV_DIS, EV_WINDOW, EV_ATTACK = range(8)
+EV_TRICKLE_FIRE, EV_TRICKLE_END, EV_RX, EV_REPLAY, EV_DATA, EV_DIS, EV_WINDOW, EV_ATTACK, EV_CONTACT = range(9)
 PKT_DIO, PKT_DIS, PKT_RDT = range(3)
 
 INF = math.inf
@@ -56,6 +56,7 @@ class SimConfig:
     parent_switch_threshold: float = 128.0
     rank_increase: float = 256.0
     position_step: float = 0.5
+    contact_step: float = 5.0  # sampling period of in-range pairs (mobile)
     record_windows: bool = False
 
     @property
@@ -78,13 +79,16 @@ class Simulation:
         self.is_attacker[order[:cfg.n_attackers]] = True
         self.legit = [i for i in range(n) if not self.is_attacker[i]]
 
+        # contact[i, j]: j was within range of i at some point after detection started
         if cfg.mobile:
             self._build_waypoints(np.random.default_rng([cfg.seed, 22, cfg.n_sensors]))
             self._pos_cache = {}
+            self.contact = np.zeros((n, n), dtype=bool)
         else:
             d = np.linalg.norm(self.pos0[:, None, :] - self.pos0[None, :, :], axis=2)
             self.static_dist = d
             self.static_nbrs = [np.nonzero((d[i] <= self.R) & (np.arange(n) != i))[0] for i in range(n)]
+            self.contact = (d <= self.R) & ~np.eye(n, dtype=bool)
 
         # Shared by all detectors of a scenario, so paired runs only diverge through detection.
         self.rng = np.random.default_rng(
@@ -374,6 +378,12 @@ class Simulation:
         if t + self.cfg.window <= self.cfg.duration + 1e-9:
             self.push(t + self.cfg.window, EV_WINDOW, None)
 
+    def on_contact_sample(self, t):
+        p = self.positions_at(t)
+        d = np.linalg.norm(p[:, None, :] - p[None, :, :], axis=2)
+        self.contact |= (d <= self.R) & ~np.eye(self.n, dtype=bool)
+        self.push(t + self.cfg.contact_step, EV_CONTACT, None)
+
     def run(self):
         cfg = self.cfg
         self.rank[0], self.joined[0] = ROOT_RANK, True
@@ -385,6 +395,8 @@ class Simulation:
             if self.is_attacker[i]:
                 self.push(cfg.attack_start, EV_ATTACK, i)
         self.push(cfg.window, EV_WINDOW, None)
+        if cfg.mobile:
+            self.push(cfg.detection_start, EV_CONTACT, None)
 
         handlers = {
             EV_TRICKLE_FIRE: lambda p, t: self.on_trickle_fire(*p, t),
@@ -395,6 +407,7 @@ class Simulation:
             EV_DIS: self.on_dis_timer,
             EV_WINDOW: lambda p, t: self.on_window(t),
             EV_ATTACK: self.on_attack_start,
+            EV_CONTACT: lambda p, t: self.on_contact_sample(t),
         }
         heap = self._heap
         while heap and heap[0][0] <= cfg.duration:

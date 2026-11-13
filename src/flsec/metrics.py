@@ -1,7 +1,8 @@
 """Metrics of a simulation run.
 
-Pair level: every (legitimate detector, neighbor) pair with at least one DIO received after
-detection started; predicted positive if the detector blocked the neighbor at least once.
+Pair level: every (legitimate detector, node) pair that was within radio range at some point after
+detection started; predicted positive if the detector blocked the node at least once. The pair set
+depends only on the topology, so it is the same for every detector.
 FTD: time from the attack start until an attacker is first marked suspicious by any detector.
 """
 
@@ -28,17 +29,20 @@ def summarize(sim):
     cfg = sim.cfg
     attackers = [i for i in range(sim.n) if sim.is_attacker[i]]
     tp = fp = tn = fn = 0
+    pairs_heard = 0
     for d in sim.legit:
         blocked_by_d = sim.detectors[d].ever_blocked
-        for nb in sim.heard_after[d]:
-            hit = nb in blocked_by_d
+        pairs_heard += len(sim.heard_after[d])
+        for nb in np.nonzero(sim.contact[d])[0]:
+            hit = int(nb) in blocked_by_d
             if sim.is_attacker[nb]:
                 tp += hit
                 fn += not hit
             else:
                 fp += hit
                 tn += not hit
-    out = {"tp": tp, "fp": fp, "tn": tn, "fn": fn, **classification_metrics(tp, fp, tn, fn)}
+    out = {"tp": tp, "fp": fp, "tn": tn, "fn": fn, "pairs_heard": pairs_heard,
+           **classification_metrics(tp, fp, tn, fn)}
 
     first_suspicion, first_block = {}, {}
     for d in sim.legit:
