@@ -31,6 +31,13 @@ LABELS = {
         "normal": "Normal", "quarantine": "Quarantine", "malicious": "Malicious",
         "delta": "δ = 0.5",
         "stia_panel": "STIA = {v:g} s",
+        "pan": "Attacker nodes (%)",
+        "ari_panel": "ARI = {v:g} s",
+        "static": "Static-RPL",
+        "mobile": "Mobile-RPL",
+        "accuracy": "Accuracy (%)",
+        "f1": "F1 score (%)",
+        "ftd_mean": "First-time detection (s)",
     },
     "tr": {
         "dio_counter": "DIO_Counter (30 s pencerede DIO sayısı)",
@@ -42,8 +49,17 @@ LABELS = {
         "normal": "Normal", "quarantine": "Karantina", "malicious": "Kötücül",
         "delta": "δ = 0,5",
         "stia_panel": "STIA = {v:g} s",
+        "pan": "Saldırgan düğüm oranı (%)",
+        "ari_panel": "ARI = {v:g} s",
+        "static": "Statik RPL",
+        "mobile": "Mobil RPL",
+        "accuracy": "Doğruluk (%)",
+        "f1": "F1 skoru (%)",
+        "ftd_mean": "İlk tespit süresi (s)",
     },
 }
+
+METHOD_COLORS = {"FLSec-RPL": SERIES[0], "CoSec-RPL": SERIES[1], "Anomaly-Based IDS": SERIES[2]}
 
 
 def apply_style():
@@ -129,4 +145,39 @@ def plot_decision_surfaces(fls, path, stia_values=(0.0, 15.0), markers=None, lan
     cbar = fig.colorbar(mesh, ax=axes.tolist(), fraction=0.04, pad=0.02)
     cbar.set_label(text["aggressive_weight"], color=INK_SECONDARY)
     cbar.outline.set_visible(False)
+    return save(fig, path)
+
+
+def plot_metric_grid(summary, metric, path, colors=None, lang="en"):
+    """Metric vs. attacker share; rows: static/mobile, columns: replay interval."""
+    apply_style()
+    text = LABELS[lang]
+    colors = colors or METHOD_COLORS
+    aris = sorted(summary["ari"].unique())
+    scale = 100 if metric in ("accuracy", "f1", "precision", "recall", "fpr") else 1
+    fig, axes = plt.subplots(2, len(aris), figsize=(1.75 * len(aris) + 0.8, 4.3), sharex=True, sharey=True)
+    for r, mobile in enumerate((False, True)):
+        for c, ari in enumerate(aris):
+            ax = axes[r, c]
+            cell = summary[(summary["mobile"] == mobile) & (summary["ari"] == ari)]
+            for method, color in colors.items():
+                m = cell[cell["method"] == method].sort_values("pan")
+                if m[metric].notna().any():
+                    ax.plot(m["pan"] * 100, m[metric] * scale, color=color, marker="o", markersize=3.5,
+                            label=method)
+            if r == 0:
+                ax.set_title(text["ari_panel"].format(v=ari), fontsize=8.5)
+            if c == 0:
+                ax.set_ylabel(f"{text['mobile' if mobile else 'static']}\n{text[metric]}")
+            if r == 1:
+                ax.set_xlabel(text["pan"] if c == len(aris) // 2 else "")
+            ax.set_xticks([10, 30, 50])
+    handles, labels = [], []
+    for ax in axes.ravel():
+        for h, lab in zip(*ax.get_legend_handles_labels()):
+            if lab not in labels:
+                handles.append(h)
+                labels.append(lab)
+    fig.legend(handles, labels, loc="upper center", ncol=len(labels), bbox_to_anchor=(0.5, 1.03), fontsize=8)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
     return save(fig, path)

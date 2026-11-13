@@ -1,0 +1,37 @@
+n_sensors,mobile,method,metric,min,max,source
+16,False,FLSec-RPL,accuracy,97,100,Fig. 10A
+16,False,CoSec-RPL,accuracy,49,66,Fig. 10A
+16,False,Anomaly-Based IDS,accuracy,49,64,Fig. 10A
+16,True,FLSec-RPL,accuracy,75,100,Fig. 10B
+16,True,CoSec-RPL,accuracy,61,98,Fig. 10B
+16,True,Anomaly-Based IDS,accuracy,58,94,Fig. 10B
+16,False,FLSec-RPL,f1,91,100,Fig. 11A
+16,False,CoSec-RPL,f1,1,27,Fig. 11A
+16,False,Anomaly-Based IDS,f1,21,51,Fig. 11A
+16,True,FLSec-RPL,f1,60,100,Fig. 11B
+16,True,CoSec-RPL,f1,14,97,Fig. 11B
+16,True,Anomaly-Based IDS,f1,9,83,Fig. 11B
+16,False,FLSec-RPL,ftd_s,27,45,Fig. 15A
+16,False,CoSec-RPL,ftd_s,27,612,Fig. 15A
+16,False,Anomaly-Based IDS,ftd_s,27,698,Fig. 15A
+16,True,FLSec-RPL,ftd_s,31,110,Fig. 15B
+16,True,CoSec-RPL,ftd_s,28,348,Fig. 15B
+16,True,Anomaly-Based IDS,ftd_s,28,631,Fig. 15B
+32,False,FLSec-RPL,accuracy,96,99,Fig. 16A
+32,False,CoSec-RPL,accuracy,66,95,Fig. 16A
+32,False,Anomaly-Based IDS,accuracy,61,72,Fig. 16A
+32,True,FLSec-RPL,accuracy,70,99,Fig. 16B
+32,True,CoSec-RPL,accuracy,65,98,Fig. 16B
+32,True,Anomaly-Based IDS,accuracy,66,95,Fig. 16B
+32,False,FLSec-RPL,f1,93,99,Fig. 17A
+32,False,CoSec-RPL,f1,14,70,Fig. 17A
+32,False,Anomaly-Based IDS,f1,13,31,Fig. 17A
+32,True,FLSec-RPL,f1,25,99,Fig. 17B
+32,True,CoSec-RPL,f1,10,94,Fig. 17B
+32,True,Anomaly-Based IDS,f1,16,86,Fig. 17B
+32,False,FLSec-RPL,ftd_s,27,69,Fig. 21A
+32,False,CoSec-RPL,ftd_s,27,470,Fig. 21A
+32,False,Anomaly-Based IDS,ftd_s,27,564,Fig. 21A
+32,True,FLSec-RPL,ftd_s,53,490,Fig. 21B
+32,True,CoSec-RPL,ftd_s,28,690,Fig. 21B
+32,True,Anomaly-Based IDS,ftd_s,33,710,Fig. 21B
