@@ -137,7 +137,7 @@ experiments/proposed/   dataset, tuning and evaluation scripts
 data/                   paper ranges and the tuning dataset
 results/                tables, figures and the tuned membership functions
 tests/                  unit tests
-report/                 technical report (PDF)
+report/                 technical report (PDF, in Turkish)
 presentation/           slides (PDF)
 ```
 
