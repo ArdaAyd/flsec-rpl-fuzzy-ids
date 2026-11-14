@@ -109,9 +109,11 @@ cross-checks the inference engine.
 | Unit tests | `python -m pytest` | < 10 s |
 | Walk typical neighbors through phases I-III | `python experiments/baseline/fls_walkthrough.py` | < 5 s |
 | Reproduction (2000 simulations) | `python experiments/baseline/run_reproduction.py` | ~6 min |
+| Ablation and sensitivity (4000 simulations) | `python experiments/baseline/run_ablation.py` | ~8 min |
 | Build the tuning dataset | `python experiments/proposed/make_dataset.py` | ~4 min |
 | Tune the membership functions | `python experiments/proposed/tune_mfs.py` | ~6 min |
 | Closed-loop test of the tuned sets | `python experiments/proposed/evaluate_tuned.py` | ~4 min |
+| Packet loss robustness (1440 simulations) | `python experiments/proposed/run_robustness.py` | ~6 min |
 
 All scripts are seeded and write their tables to `results/tables/` and their figures to
 `results/figures/`.
@@ -298,6 +300,23 @@ membership functions and runs on the same 500 scenarios as the full method
   aggressive weight (0.685 instead of 0.734), so MD is larger and blocking slower, and more
   legitimate windows cross the threshold (19.5 % instead of 15.3 %).
 
+### Robustness to packet loss
+
+Both variants were run with 0, 10, 20 and 30 % packet loss on nine attack settings (PAN 10, 30 and
+50 %, ARI 1, 4 and 8 s), both network sizes and seeds 0-4
+([`experiments/proposed/run_robustness.py`](experiments/proposed/run_robustness.py);
+[`results/tables/robustness_summary.md`](results/tables/robustness_summary.md)).
+
+![Robustness, F1](results/figures/fig_robustness_f1.png)
+
+- Static-RPL is unaffected up to 30 % loss (F1 at least 0.997 for both variants). First-time
+  detection grows by a few seconds and stays 10-15 s shorter with the tuned sets.
+- In Mobile-RPL the tuned sets lead clearly at 0-10 % loss (16 sensors, 0 % loss: F1 0.980 vs
+  0.806), but both variants fall to about 0.71 at 30 % loss. A lost replay doubles the measured
+  interval and raises STIA, so attackers start to look irregular and are missed (recall 0.66-0.69
+  at 30 %), while false positives disappear. The tuning was done at 2 % loss and fixed false
+  positives; it does not address this kind of miss.
+
 ## Limitations
 
 - The simulator models the RPL control plane only. There is no channel contention or collision
@@ -312,6 +331,9 @@ membership functions and runs on the same 500 scenarios as the full method
   Trickle settings. Another network, window length or a real testbed would need new tuning data.
 - The tuning objective is computed on single windows; closed-loop effects of phase III are only
   seen in the final evaluation.
+- STIA is sensitive to lost DIOs. With 20-30 % loss, missed replays make attackers look irregular
+  and recall in Mobile-RPL drops to 0.66-0.77 for both variants. Tuning on lossy data or a
+  loss-tolerant interval statistic would be needed to close this gap.
 
 ## References
 
