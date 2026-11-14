@@ -10,6 +10,7 @@ import numpy as np  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm  # noqa: E402
 
 from . import config  # noqa: E402
+from .fuzzy import trapmf  # noqa: E402
 
 SERIES = ("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948")
 INK = "#0b0b0b"
@@ -148,11 +149,12 @@ def plot_decision_surfaces(fls, path, stia_values=(0.0, 15.0), markers=None, lan
     return save(fig, path)
 
 
-def plot_metric_grid(summary, metric, path, colors=None, lang="en"):
+def plot_metric_grid(summary, metric, path, colors=None, styles=None, lang="en"):
     """Metric vs. attacker share; rows: static/mobile, columns: replay interval."""
     apply_style()
     text = LABELS[lang]
     colors = colors or METHOD_COLORS
+    styles = styles or {}
     aris = sorted(summary["ari"].unique())
     scale = 100 if metric in ("accuracy", "f1", "precision", "recall", "fpr") else 1
     fig, axes = plt.subplots(2, len(aris), figsize=(1.75 * len(aris) + 0.8, 4.3), sharex=True, sharey=True)
@@ -163,8 +165,8 @@ def plot_metric_grid(summary, metric, path, colors=None, lang="en"):
             for method, color in colors.items():
                 m = cell[cell["method"] == method].sort_values("pan")
                 if m[metric].notna().any():
-                    ax.plot(m["pan"] * 100, m[metric] * scale, color=color, marker="o", markersize=3.5,
-                            label=method)
+                    style = {"marker": "o", "markersize": 3.5, **styles.get(method, {})}
+                    ax.plot(m["pan"] * 100, m[metric] * scale, color=color, label=method, **style)
             if r == 0:
                 ax.set_title(text["ari_panel"].format(v=ari), fontsize=8.5)
             if c == 0:
@@ -180,4 +182,36 @@ def plot_metric_grid(summary, metric, path, colors=None, lang="en"):
                 labels.append(lab)
     fig.legend(handles, labels, loc="upper center", ncol=len(labels), bbox_to_anchor=(0.5, 1.03), fontsize=8)
     fig.tight_layout(rect=(0, 0, 1, 0.95))
+    return save(fig, path)
+
+
+TUNED_STYLES = {
+    "FLSec-RPL": {"linestyle": "--", "marker": "o", "markersize": 3.5},
+    "FLSec-RPL (tuned MFs)": {"linestyle": "-", "marker": "s", "markersize": 3.5},
+}
+TUNED_COLORS = {"FLSec-RPL": SERIES[0], "FLSec-RPL (tuned MFs)": "#104281"}
+
+
+def plot_mf_comparison(paper_mfs, tuned_mfs, path, lang="en"):
+    """Paper (solid) vs. tuned (dashed) input membership functions."""
+    apply_style()
+    text = LABELS[lang]
+    names = list(paper_mfs)
+    fig, axes = plt.subplots(1, len(names), figsize=(3.3 * len(names), 2.9), sharey=True)
+    x = np.linspace(*config.INPUT_UNIVERSE, 3001)
+    for ax, name in zip(axes, names):
+        for i, term in enumerate(config.TERMS):
+            ax.plot(x, trapmf(x, *paper_mfs[name][term]), color=SERIES[i], linewidth=1.4, alpha=0.55)
+            ax.plot(x, trapmf(x, *tuned_mfs[name][term]), color=SERIES[i], linewidth=2.0, linestyle="--",
+                    label=text[term])
+        ax.set_xlim(*config.INPUT_UNIVERSE)
+        ax.set_ylim(0, 1.08)
+        ax.set_yticks([0, 0.5, 1])
+        ax.set_xlabel(text[name])
+    axes[0].set_ylabel(text["membership"])
+    handles, labels = axes[0].get_legend_handles_labels()
+    note = "solid: paper, dashed: tuned" if lang == "en" else "düz: makale, kesikli: ayarlanmış"
+    fig.legend(handles, labels, loc="upper center", ncol=3, bbox_to_anchor=(0.42, 1.06), fontsize=8)
+    fig.text(0.98, 1.0, note, ha="right", va="bottom", fontsize=8, color=INK_SECONDARY)
+    fig.tight_layout()
     return save(fig, path)
