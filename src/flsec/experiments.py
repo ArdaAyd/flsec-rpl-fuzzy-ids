@@ -5,6 +5,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor
 
 import pandas as pd
+from scipy.stats import wilcoxon
 
 from . import config as C
 from .simulator import SimConfig, Simulation, run_simulation
@@ -67,3 +68,22 @@ def summarize_runs(df, keys=("n_sensors", "mobile", "method", "pan", "ari")):
                "node_detection_rate", "node_legit_blocked", "attack_dio_processed_per_node",
                "trickle_resets_per_node"]
     return df.groupby(list(keys))[metrics].mean().reset_index()
+
+
+def paired_comparison(runs, reference, metrics, cell=("n_sensors", "mobile", "pan", "ari", "seed"),
+                      group=("n_sensors", "mobile")):
+    """Mean of each method vs. the reference on identical scenarios, with Wilcoxon signed-rank p-values."""
+    order = [m for m in runs["method"].unique() if m != reference]
+    wide = runs.pivot_table(index=list(cell), columns="method", values=metrics, dropna=False)
+    rows = []
+    for keys, part in wide.groupby(level=list(group)):
+        for method in order:
+            for metric in metrics:
+                a, b = part[(metric, reference)], part[(metric, method)]
+                ok = a.notna() & b.notna()
+                diff = (b - a)[ok]
+                p = wilcoxon(b[ok], a[ok]).pvalue if (diff != 0).any() else 1.0
+                rows.append({**dict(zip(group, keys)), "method": method, "metric": metric,
+                             "reference": a[ok].mean(), "value": b[ok].mean(), "difference": diff.mean(),
+                             "p_value": p, "pairs": int(ok.sum())})
+    return pd.DataFrame(rows)

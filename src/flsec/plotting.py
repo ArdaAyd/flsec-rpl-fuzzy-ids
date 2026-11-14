@@ -39,6 +39,10 @@ LABELS = {
         "accuracy": "Accuracy (%)",
         "f1": "F1 score (%)",
         "ftd_mean": "First-time detection (s)",
+        "time_to_block_mean": "Time to block (s)",
+        "node_legit_blocked": "Legitimate nodes blocked per run",
+        "p_loss": "Packet loss (%)",
+        "sensors_panel": "{n} sensors",
     },
     "tr": {
         "dio_counter": "DIO_Counter (30 s pencerede DIO sayısı)",
@@ -57,6 +61,10 @@ LABELS = {
         "accuracy": "Doğruluk (%)",
         "f1": "F1 skoru (%)",
         "ftd_mean": "İlk tespit süresi (s)",
+        "time_to_block_mean": "Engellenme süresi (s)",
+        "node_legit_blocked": "Koşu başına engellenen meşru düğüm",
+        "p_loss": "Paket kaybı (%)",
+        "sensors_panel": "{n} sensör",
     },
 }
 
@@ -214,4 +222,61 @@ def plot_mf_comparison(paper_mfs, tuned_mfs, path, lang="en"):
     fig.legend(handles, labels, loc="upper center", ncol=3, bbox_to_anchor=(0.42, 1.06), fontsize=8)
     fig.text(0.98, 1.0, note, ha="right", va="bottom", fontsize=8, color=INK_SECONDARY)
     fig.tight_layout()
+    return save(fig, path)
+
+
+def plot_variants(summary, metric, path, order, names=None, lang="en"):
+    """Dot plot of one metric per variant; filled: static, hollow: mobile; one panel per network size."""
+    apply_style()
+    text = LABELS[lang]
+    names = names or {}
+    scale = 100 if metric in ("accuracy", "f1", "precision", "recall", "fpr") else 1
+    sizes = sorted(summary["n_sensors"].unique())
+    fig, axes = plt.subplots(1, len(sizes), figsize=(3.6 * len(sizes) + 1.6, 0.34 * len(order) + 1.1),
+                             sharey=True)
+    axes = np.atleast_1d(axes)
+    y = np.arange(len(order))[::-1]
+    for ax, n in zip(axes, sizes):
+        part = summary[summary["n_sensors"] == n].set_index(["method", "mobile"])[metric] * scale
+        for mobile, marker in ((False, "o"), (True, "s")):
+            values = [part.get((m, mobile), np.nan) for m in order]
+            ax.scatter(values, y, marker=marker, s=34, zorder=3,
+                       facecolor=INK if not mobile else "white", edgecolor=INK if not mobile else INK_MUTED,
+                       linewidth=1.4, label=text["mobile" if mobile else "static"])
+        ax.set_yticks(y)
+        ax.set_yticklabels([names.get(m, m) for m in order])
+        ax.set_title(text["sensors_panel"].format(n=n), fontsize=9)
+        ax.set_xlabel(text[metric])
+        ax.grid(axis="y", visible=False)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=2, bbox_to_anchor=(0.6, 1.06), fontsize=8)
+    fig.tight_layout()
+    return save(fig, path)
+
+
+def plot_loss_curves(summary, metric, path, colors=None, styles=None, lang="en"):
+    """Metric vs. packet loss; rows: network size, columns: static/mobile."""
+    apply_style()
+    text = LABELS[lang]
+    colors, styles = colors or TUNED_COLORS, styles or TUNED_STYLES
+    scale = 100 if metric in ("accuracy", "f1", "precision", "recall", "fpr") else 1
+    sizes = sorted(summary["n_sensors"].unique())
+    fig, axes = plt.subplots(len(sizes), 2, figsize=(6.6, 2.4 * len(sizes) + 0.4), sharex=True, sharey=True,
+                             squeeze=False)
+    for r, n in enumerate(sizes):
+        for c, mobile in enumerate((False, True)):
+            ax = axes[r, c]
+            cell = summary[(summary["n_sensors"] == n) & (summary["mobile"] == mobile)]
+            for method, color in colors.items():
+                m = cell[cell["method"] == method].sort_values("p_loss")
+                ax.plot(m["p_loss"] * 100, m[metric] * scale, color=color, label=method, **styles.get(method, {}))
+            ax.set_title(f"{text['sensors_panel'].format(n=n)}, {text['mobile' if mobile else 'static']}",
+                         fontsize=8.5)
+            if c == 0:
+                ax.set_ylabel(text[metric])
+            if r == len(sizes) - 1:
+                ax.set_xlabel(text["p_loss"])
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=2, bbox_to_anchor=(0.5, 1.03), fontsize=8)
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
     return save(fig, path)

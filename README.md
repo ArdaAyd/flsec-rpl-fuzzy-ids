@@ -264,6 +264,40 @@ What changed and why it helps:
 Costs: first-time detection in Mobile-RPL grows by 2.5-4.5 s, and the tuned Low and Medium STIA
 sets overlap much more than the expert sets do.
 
+### Ablation and sensitivity
+
+The paper does not measure what each component contributes. Every variant below uses the paper's
+membership functions and runs on the same 500 scenarios as the full method
+([`experiments/baseline/run_ablation.py`](experiments/baseline/run_ablation.py); pairwise tests in
+[`results/tables/ablation_vs_full.md`](results/tables/ablation_vs_full.md)).
+
+| Variant | F1, 16 static | F1, 16 mobile | F1, 32 mobile | Legitimate nodes blocked, 16 mobile | Time to block, 16 static (s) |
+|---|---|---|---|---|---|
+| FLSec-RPL | 0.994 | 0.819 | 0.917 | 6.7 | 123 |
+| no STIA (STIA = 0) | 0.854 | 0.509 | 0.471 | 11.6 | 95 |
+| no RDT flag | 0.991 | 0.779 | 0.894 | 7.9 | 123 |
+| no validation (block at first detection) | 0.795 | 0.484 | 0.461 | 11.2 | 57 |
+| fixed MD = 3 | 0.992 | 0.809 | 0.898 | 7.3 | 118 |
+| STIA inside the window only | 0.851 | 0.515 | 0.474 | 11.5 | 95 |
+| STIA with PTI carried over | 0.999 | 0.858 | 0.943 | 4.6 | 150 |
+| classical Mamdani centroid | 0.986 | 0.765 | 0.849 | 8.3 | 133 |
+
+![Ablation, F1](results/figures/fig_ablation_f1.png)
+
+- STIA and the validation phase carry the method. Without either of them the mobile F1 drops to
+  about 0.5 and more than 70 % of the legitimate pairs end up blocked.
+- The RDT flag only matters in Mobile-RPL, where it adds 0.02-0.04 to F1.
+- The adaptive MD hardly changes F1, but it blocks the most aggressive attackers first: with a fixed
+  MD of 3, legitimate nodes process 15-16 % more attack DIOs (142 to 162 in Static-RPL, 608 to 707
+  in Mobile-RPL with 16 sensors).
+- Computing STIA only from intervals inside the window behaves like having no STIA, because a
+  Trickle burst rarely leaves more than two DIOs in one window. Carrying PTI across windows lowers
+  false positives but delays the first detection to 85-101 s. The literal reading of Eqs. 2-5 used
+  in the reproduction lies between the two.
+- The classical Mamdani centroid pulls the output towards 0.5: flagged attacker windows get a lower
+  aggressive weight (0.685 instead of 0.734), so MD is larger and blocking slower, and more
+  legitimate windows cross the threshold (19.5 % instead of 15.3 %).
+
 ## Limitations
 
 - The simulator models the RPL control plane only. There is no channel contention or collision
