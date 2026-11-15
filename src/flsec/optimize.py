@@ -141,7 +141,7 @@ def negative_score(x):
     return -objective_terms(x, *_DATA)["score"]
 
 
-def tune(X, y, w, maxiter=200, popsize=15, seed=0, processes=None):
+def tune(X, y, w, maxiter=150, popsize=15, seed=0, processes=None):
     """Differential evolution over the 24 breakpoints, started with the paper's MFs in the population."""
     history = []
 

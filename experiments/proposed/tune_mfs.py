@@ -3,7 +3,7 @@
 Writes the tuned sets, the convergence history, window-level metrics (paper vs. tuned) on the
 train and validation splits and a comparison figure.
 
-Usage: python experiments/proposed/tune_mfs.py [--subset all|static|mobile] [--maxiter 200]
+Usage: python experiments/proposed/tune_mfs.py [--subset all|static|mobile] [--maxiter 150]
 """
 
 import argparse
@@ -44,7 +44,7 @@ def evaluate(df, mfs_by_name):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--subset", choices=["all", "static", "mobile"], default="all")
-    parser.add_argument("--maxiter", type=int, default=200)
+    parser.add_argument("--maxiter", type=int, default=150)
     parser.add_argument("--popsize", type=int, default=15)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--processes", type=int, default=None)
