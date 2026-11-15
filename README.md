@@ -108,6 +108,7 @@ cross-checks the inference engine.
 |---|---|---|
 | Unit tests | `python -m pytest` | < 10 s |
 | Walk typical neighbors through phases I-III | `python experiments/baseline/fls_walkthrough.py` | < 5 s |
+| Live demo: rules, membership functions, single windows, single simulations | `python demo.py --help` | seconds |
 | Reproduction (2000 simulations) | `python experiments/baseline/run_reproduction.py` | ~6 min |
 | Ablation and sensitivity (4000 simulations) | `python experiments/baseline/run_ablation.py` | ~8 min |
 | Build the tuning dataset | `python experiments/proposed/make_dataset.py` | ~4 min |
@@ -116,7 +117,10 @@ cross-checks the inference engine.
 | Packet loss robustness (1440 simulations) | `python experiments/proposed/run_robustness.py` | ~6 min |
 
 All scripts are seeded and write their tables to `results/tables/` and their figures to
-`results/figures/`.
+`results/figures/`. `demo.py` only prints to the terminal: `python demo.py fis 4 8 0` explains the
+decision for one window, `python demo.py times ...` derives DIO_Counter, DTI and STIA from DIO arrival
+times, and `python demo.py sim --pan 0.2 --ari 2 --mobile` runs one scenario with the paper's and the
+tuned membership functions.
 
 ## Repository Structure
 
@@ -134,6 +138,7 @@ src/flsec/
   plotting.py      figures
 experiments/baseline/   walkthrough and reproduction scripts
 experiments/proposed/   dataset, tuning and evaluation scripts
+demo.py                 command-line demo for the presentation
 data/                   paper ranges and the tuning dataset
 results/                tables, figures and the tuned membership functions
 tests/                  unit tests
