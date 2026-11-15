@@ -144,6 +144,7 @@ results/                tables, figures and the tuned membership functions
 tests/                  unit tests
 report/                 technical report (PDF, in Turkish)
 presentation/           slides (PDF)
+references/             all sources cited in the report
 ```
 
 ## Reproduction Experiments
@@ -341,6 +342,9 @@ Both variants were run with 0, 10, 20 and 30 % packet loss on nine attack settin
   loss-tolerant interval statistic would be needed to close this gap.
 
 ## References
+
+The main sources are listed below. All 24 sources cited in the report, with DOI links, are in
+[`references/README.md`](references/README.md).
 
 1. C. Kim, C. So-In, Y. Kongsorot, and P. Aimtongkham, "FLSec-RPL: a fuzzy logic-based intrusion detection scheme for securing RPL-based IoT networks against DIO neighbor suppression attacks," *Cybersecurity*, vol. 7, art. no. 27, 2024, doi: 10.1186/s42400-024-00223-x.
 2. T. Winter et al., "RPL: IPv6 Routing Protocol for Low-Power and Lossy Networks," RFC 6550, IETF, Mar. 2012.
